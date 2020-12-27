@@ -28,6 +28,10 @@ function Core:OnEnable()
 		self.db.profile.AutoBuy = 1		--自動購買
 		self.db.profile.AutoBuyList = {}
 	end
+
+	if not self.db.profile.TooltipShowID then
+		self.db.profile.TooltipShowID = 0	--显示相关物品的ID信息
+	end
 	
 	self:InitializeOptions()
 end

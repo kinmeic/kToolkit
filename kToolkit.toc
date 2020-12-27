@@ -22,3 +22,4 @@ Modules\Minimap.lua
 Modules\ReadyCheck.lua
 Modules\Resurrect.lua
 Modules\SkipGossip.lua
+Modules\TooltipShowId.lua

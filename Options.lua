@@ -88,6 +88,20 @@ local options = {
 				},
     		},
 		},
+		group3 = {
+    		order = 3,
+    		type = 'group',
+    		name = L["Group3"],
+    		args = {
+	    		switch1 = {
+					order = 1,
+					type = "toggle",
+					name = L["Switch8"],
+					get = function(info) return Core.db.profile.TooltipShowID == 1 end,
+					set = function(info, value) Core.db.profile.TooltipShowID = value and 1 or 0 end,
+				},
+			}
+    	},
     },
 }
 
