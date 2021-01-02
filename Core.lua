@@ -13,7 +13,7 @@ function Core:OnInitialize()
 end
 
 function Core:OnEnable()
-	if not self.db.profile.Repair then
+	if not self.db.profile then
 		self.db.profile = {
 			["MinimapPing"] = 1,		--誰點擊了小地圖
 			["ReadyCheck"] = 1,			--自動就位確認
@@ -21,20 +21,11 @@ function Core:OnEnable()
 			["SellJunk"] = 1,			--自動出售灰色物品
 			["Resurrect"] = 1,			--自動接受復活
 			["SkipGossip"] = 0,			--自動跳過閒聊
+			["AutoBuy"] = 1,			--自動購買
+			["AutoBuyList"] = {},
+			["TooltipShowID"] = 1,		--显示相关物品的ID信息
+			["TooltipMouse"] = 1,		--提示栏跟随鼠标
 		}
-	end
-	
-	if not self.db.profile.AutoBuy then
-		self.db.profile.AutoBuy = 1		--自動購買
-		self.db.profile.AutoBuyList = {}
-	end
-
-	if not self.db.profile.TooltipShowID then
-		self.db.profile.TooltipShowID = 0	--显示相关物品的ID信息
-	end
-
-	if not self.db.profile.TooltipMouse then
-		self.db.profile.TooltipMouse = 1	--显示相关物品的ID信息
 	end
 	
 	self:InitializeOptions()
