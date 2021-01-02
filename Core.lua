@@ -32,6 +32,10 @@ function Core:OnEnable()
 	if not self.db.profile.TooltipShowID then
 		self.db.profile.TooltipShowID = 0	--显示相关物品的ID信息
 	end
+
+	if not self.db.profile.TooltipMouse then
+		self.db.profile.TooltipMouse = 1	--显示相关物品的ID信息
+	end
 	
 	self:InitializeOptions()
 end

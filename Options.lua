@@ -100,6 +100,13 @@ local options = {
 					get = function(info) return Core.db.profile.TooltipShowID == 1 end,
 					set = function(info, value) Core.db.profile.TooltipShowID = value and 1 or 0 end,
 				},
+				switch2 = {
+					order = 2,
+					type = "toggle",
+					name = L["Switch9"],
+					get = function(info) return Core.db.profile.TooltipMouse == 1 end,
+					set = function(info, value) Core.db.profile.TooltipMouse = value and 1 or 0 end,
+				},
 			}
     	},
     },
