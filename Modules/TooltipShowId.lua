@@ -393,7 +393,7 @@ hooksecurefunc("GameTooltip_SetDefaultAnchor", function()
 end)
 
 hooksecurefunc(GameTooltip, "FadeOut", function(self)
-  GameTooltip:Hide()
+--  GameTooltip:Hide()
 end)
 
 kTip = CreateFrame("Frame", nil, GameTooltip)
