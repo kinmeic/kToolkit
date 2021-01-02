@@ -384,3 +384,28 @@ if not isClassicWow then
     if self and self.questID then addLine(GameTooltip, self.questID, kinds.quest) end
   end)
 end
+
+
+hooksecurefunc("GameTooltip_SetDefaultAnchor", function()
+  if Core.db.profile.TooltipMouse == 1 then
+    GameTooltip:ClearAllPoints()
+  end
+end)
+
+hooksecurefunc(GameTooltip, "FadeOut", function(self)
+  GameTooltip:Hide()
+end)
+
+kTip = CreateFrame("Frame", nil, GameTooltip)
+
+kTip:SetScript("OnUpdate", function(elapsed)
+  if Core.db.profile.TooltipMouse == 1 then
+    x,y = GetCursorPosition()
+    uiscale = UIParent:GetScale()
+    tipscale = GameTooltip:GetScale()
+    x = (x + 30) / tipscale / uiscale
+    y = (y + 30) / tipscale / uiscale
+    GameTooltip:ClearAllPoints()
+    GameTooltip:SetPoint("BOTTOM", UIParent, "BOTTOMLEFT", x, y)
+  end
+end)
