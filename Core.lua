@@ -3,31 +3,30 @@
 ------------------
 -- local funcs
 ------------------
+local defaults = {
+	profile = {
+		MinimapPing = 1,
+		ReadyCheck = 1,
+		Repair = 1,
+		SellJunk = 1,
+		Resurrect = 1,
+		SkipGossip = 0,
+		AutoBuy = 1,
+		AutoBuyList = {},
+		TooltipShowID = 1,
+		TooltipMouse = 1,
+	},
+}
 
 ------------------
 -- normal funcs
 ------------------
 function Core:OnInitialize()
 	--database
-	self.db = LibStub("AceDB-3.0"):New("kToolkitDB")
+	self.db = LibStub("AceDB-3.0"):New("kToolkitDB", defaults)
 end
 
 function Core:OnEnable()
-	if not self.db.profile then
-		self.db.profile = {
-			["MinimapPing"] = 1,		--誰點擊了小地圖
-			["ReadyCheck"] = 1,			--自動就位確認
-			["Repair"] = 1,				--自動修理
-			["SellJunk"] = 1,			--自動出售灰色物品
-			["Resurrect"] = 1,			--自動接受復活
-			["SkipGossip"] = 0,			--自動跳過閒聊
-			["AutoBuy"] = 1,			--自動購買
-			["AutoBuyList"] = {},
-			["TooltipShowID"] = 1,		--显示相关物品的ID信息
-			["TooltipMouse"] = 1,		--提示栏跟随鼠标
-		}
-	end
-	
 	self:InitializeOptions()
 end
 

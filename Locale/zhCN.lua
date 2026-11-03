@@ -5,6 +5,7 @@ L["Minimap Ping"] = ">>|cff%s%s|r<< 点击了小地图。"
 L["Ready Check"] = "自动确认了%s发起的就位确认。"
 L["Repair Cost"] = "修理成功，共花费%s。"
 L["Repair Cost Guild"] = "工会修理成功，共花费%s。"
+L["Auto Repair Unavailable"] = "当前客户端版本不支持插件自动修理。"
 
 --Options
 L["Group1"] = "普通"

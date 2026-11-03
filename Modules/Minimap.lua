@@ -7,13 +7,17 @@ local L = LibStub("AceLocale-3.0"):GetLocale("kToolkit")
 ------------------
 function Core:MINIMAP_PING(event, unit)
 	if self.db.profile.MinimapPing == 1 then
-		local class = select(2, UnitClass(unit))
+		local _, class = UnitClass(unit)
 		local name = UnitName(unit)
-		
-		local color = RAID_CLASS_COLORS[class]
-		local colorStr = format("%2x%2x%2x",color.r*255,color.g*255,color.b*255)
-		
-		self:Printf(L["Minimap Ping"], colorStr, name)
+		local color = class and RAID_CLASS_COLORS and RAID_CLASS_COLORS[class]
+		if not color and class and C_ClassColor and C_ClassColor.GetClassColor then
+			color = C_ClassColor.GetClassColor(class)
+		end
+		local colorStr = "ffffff"
+		if color then
+			colorStr = color.colorStr or format("%02x%02x%02x", color.r * 255, color.g * 255, color.b * 255)
+		end
+		self:Printf(L["Minimap Ping"], colorStr, name or UNKNOWN)
 	end
 end
 

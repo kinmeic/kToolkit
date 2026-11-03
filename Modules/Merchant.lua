@@ -5,71 +5,65 @@ local L = LibStub("AceLocale-3.0"):GetLocale("kToolkit")
 ------------------
 -- local funcs
 ------------------
+local didWarnRepairUnavailable = false
+
 local Repair = function()
+	if InCombatLockdown and InCombatLockdown() then return end
+	local repairAllItems = (C_MerchantFrame and C_MerchantFrame.RepairAllItems) or RepairAllItems
+	if type(repairAllItems) ~= "function" then
+		if not didWarnRepairUnavailable then
+			Core:Printf(L["Auto Repair Unavailable"])
+			didWarnRepairUnavailable = true
+		end
+		return
+	end
+
 	local repairAllCost, canRepair = GetRepairAllCost()
 
-	if not canRepair then return end
-	if repairAllCost == 0 then return end
-	
-	if CanMerchantRepair() then
-		if GetMoney() > repairAllCost then
-			RepairAllItems()
-			Core:Printf(string.format(L["Repair Cost"], GetCoinTextureString(repairAllCost, 12 )))
-		end
-	end
-end
-
-local ProcessLink = function(link)
-	for color, name in string.gmatch(link, "(|c%x+)|Hitem:.+|h%[(.-)%]|h|r") do
-		if color == ITEM_QUALITY_COLORS[0].hex then
-			return true
-		else
-			return false
-		end
+	if not canRepair or not repairAllCost or repairAllCost == 0 then return end
+	if GetMoney() >= repairAllCost then
+		repairAllItems()
+		local currencyInfo = C_CurrencyInfo
+		local coinText = currencyInfo and currencyInfo.GetCoinTextureString
+			and currencyInfo.GetCoinTextureString(repairAllCost, 12)
+			or GetCoinTextureString and GetCoinTextureString(repairAllCost, 12)
+			or GetMoneyString and GetMoneyString(repairAllCost)
+			or tostring(repairAllCost)
+		Core:Printf(string.format(L["Repair Cost"], coinText))
 	end
 end
 
 local SellJunk = function()
-	for bagIndex = 0, 4 do
-		local numSlots = GetContainerNumSlots(bagIndex)
-		
-		if numSlots > 0 then
-			for slotIndex = 1, numSlots do
-				local _, _, _, quality, _, _, link = GetContainerItemInfo(bagIndex, slotIndex)
-				
-				if quality == 0 or quality == -1 then
-					if ProcessLink(link) then
-						UseContainerItem(bagIndex, slotIndex)
-					end
-				end
-			end
-		end
+	if InCombatLockdown and InCombatLockdown() then return end
+	if C_MerchantFrame and C_MerchantFrame.SellAllJunkItems then
+		C_MerchantFrame.SellAllJunkItems()
 	end
 end
 
 local AutoBuy = function()
-	local itemName, price, quantity, numAvailable, numTotal, numNeed, maxStack
-	
-	for i=1,GetMerchantNumItems() do
-		itemName, _, price, quantity, numAvailable = GetMerchantItemInfo(i)
-		
-		numTotal = Core.db.profile.AutoBuyList[itemName]
-		
+	local numItems = GetMerchantNumItems and GetMerchantNumItems() or 0
+	for i = 1, numItems do
+		local itemInfo = C_MerchantFrame.GetItemInfo(i)
+		local itemName = itemInfo and itemInfo.name
+		local quantity = itemInfo and itemInfo.stackCount
+		local numAvailable = itemInfo and itemInfo.numAvailable
+		local numTotal = itemName and Core.db.profile.AutoBuyList[itemName]
+
 		if numTotal then
-			numNeed = numTotal - GetItemCount(itemName)
-			
+			local numNeed = numTotal - C_Item.GetItemCount(itemName)
+
 			-- the vendor has a limited stock of the item
-			if numAvailable > 1 then
+			if numAvailable and numAvailable > 1 and quantity and quantity > 0 then
 				numNeed = math.floor(numNeed / quantity)
 			end
-			
+
 			if numNeed >= 1 then
 				-- Largest number of items allowed in a single purchase
-				maxStack = GetMerchantItemMaxStack(i)
-				
+				local maxStack = GetMerchantItemMaxStack(i)
+
 				if (numNeed > maxStack) then
-					local stacks = floor(numNeed / maxStack)
-					local partial = mod(numNeed, maxStack)
+					local stacks = math.floor(numNeed / maxStack)
+					local partial = numNeed % maxStack
 
 					for buy=1, stacks do
 						BuyMerchantItem(i, maxStack)
@@ -101,7 +95,7 @@ function Core:MERCHANT_SHOW()
 	if self.db.profile.SellJunk == 1 then
 		SellJunk()
 	end
-	
+
 	if self.db.profile.Repair == 1 then
 		Repair()
 	end

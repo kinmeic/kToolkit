@@ -9,34 +9,39 @@ function Core:GOSSIP_SHOW()
 	if self.db.profile.SkipGossip == 1 then
 		local bwl = "The orb's markings match the brand on your hand."
 		local mc = "You see large cavernous tunnels"
-		local t = GetGossipText()
-		if (t == bwl or (strsub(t,1,31) == mc)) then
-			SelectGossipOption(1)
+		local t = C_GossipInfo.GetText()
+		local options = C_GossipInfo.GetOptions()
+		if t and (t == bwl or strsub(t, 1, 31) == mc) then
+			local firstOption = options and options[1]
+			if firstOption then
+				if firstOption.gossipOptionID then
+					C_GossipInfo.SelectOption(firstOption.gossipOptionID)
+				elseif firstOption.orderIndex then
+					C_GossipInfo.SelectOptionByIndex(firstOption.orderIndex)
+				end
+			end
 			return
 		end
-		local list = {GetGossipOptions()}
-		for i = 2,getn(list),2 do
-			if(list[i]=="taxi" or list[i]=="battlemaster" or list[i]=="banker") then
-				SelectGossipOption(i/2)
+		-- The client removed the old option type string. Respect the modern
+		-- auto-select hint and pass the order index expected by SelectOptionByIndex.
+		for _, option in ipairs(options or {}) do
+			if option.orderIndex and option.selectOptionWhenOnlyOption then
+				C_GossipInfo.SelectOptionByIndex(option.orderIndex)
 				return
 			end
 		end
 	end
 end
 
-function Core:CHAT_MSG_CHANNEL_JOIN(...)
-	local channelName = select(9, ...)
-	
-	if channel == "大脚世界频道" then
+function Core:CHAT_MSG_CHANNEL_JOIN(event, text, playerName, languageName, channelName, playerName2, specialFlags, zoneChannelID, channelIndex, channelBaseName)
+	if channelBaseName == "大脚世界频道" then
 		ChatFrame_RemoveMessageGroup(ChatFrame1, "CHANNEL")
 	end
 end
 
-function Core:CHAT_MSG_CHANNEL_LEAVE(...)
-	local channelName = select(9, ...)
-	
-	if channel == "大脚世界频道" then
-		ChatFrame_RemoveMessageGroup(ChatFrame1, "CHANNEL")
+function Core:CHAT_MSG_CHANNEL_LEAVE(event, text, playerName, languageName, channelName, playerName2, specialFlags, zoneChannelID, channelIndex, channelBaseName)
+	if channelBaseName == "大脚世界频道" then
+		ChatFrame_AddMessageGroup(ChatFrame1, "CHANNEL")
 	end
 end
 

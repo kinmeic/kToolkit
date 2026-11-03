@@ -7,8 +7,9 @@ local L = LibStub("AceLocale-3.0"):GetLocale("kToolkit")
 ------------------
 function Core:READY_CHECK(event, name)
 	if self.db.profile.ReadyCheck == 1 and not UnitIsAFK("player") then
-		ConfirmReadyCheck(1)
-		ReadyCheckFrame:Hide()
+		-- ConfirmReadyCheck is restricted during combat on modern clients.
+		if InCombatLockdown and InCombatLockdown() then return end
+		C_PartyInfo.ConfirmReadyCheck(true)
 		self:Printf(L["Ready Check"], name)
 	end
 end

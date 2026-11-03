@@ -1,59 +1,70 @@
-﻿-- v3.1.0.5 by Tekkub Stoutwrithe
+-- Durability labels for the equipped character slots.
+local SLOT_NAMES = {
+	"Head", "Shoulder", "Chest", "Waist", "Legs", "Feet", "Wrist", "Hands",
+	"MainHand", "SecondaryHand",
+}
+local FONT_SIZE = 13
+local slotIDs, labels = {}, {}
+local frame = CreateFrame("Frame")
 
-local SLOTIDS, FONTSIZE = {}, 13
-for _,slot in pairs({"Head", "Shoulder", "Chest", "Waist", "Legs", "Feet", "Wrist", "Hands", "MainHand", "SecondaryHand"}) do SLOTIDS[slot] = GetInventorySlotInfo(slot .. "Slot") end
-local frame = CreateFrame("Frame", nil, CharacterFrame)
-
-local function RYGColorGradient(perc)
-	local relperc = perc*2 % 1
-	if perc <= 0 then       return           1,       0, 0
-	elseif perc < 0.5 then  return           1, relperc, 0
-	elseif perc == 0.5 then return           1,       1, 0
-	elseif perc < 1.0 then  return 1 - relperc,       1, 0
-	else                    return           0,       1, 0 end
+local function RYGColorGradient(percent)
+	local relPercent = percent * 2 % 1
+	if percent <= 0 then
+		return 1, 0, 0
+	elseif percent < 0.5 then
+		return 1, relPercent, 0
+	elseif percent == 0.5 then
+		return 1, 1, 0
+	elseif percent < 1 then
+		return 1 - relPercent, 1, 0
+	end
+	return 0, 1, 0
 end
 
-local fontstrings = setmetatable({}, {
-	__index = function(t,i)
-		local gslot = _G["Character"..i.."Slot"]
-		assert(gslot, "Character"..i.."Slot does not exist")
-
-		local fstr = gslot:CreateFontString(nil, "OVERLAY")
-		local font, _, flags = NumberFontNormal:GetFont()
-		fstr:SetFont(font, FONTSIZE, flags)
-		fstr:SetPoint("CENTER", gslot, "BOTTOM", 0, 8)
-		t[i] = fstr
-		return fstr
-	end,
-})
-
-function frame:OnEvent(event, arg1)
-	if event == "ADDON_LOADED" and arg1:lower() ~= "tekability" then
-		for i,fstr in pairs(fontstrings) do
-			local font, _, flags = NumberFontNormal:GetFont()
-			fstr:SetFont(font, FONTSIZE, flags)
-		end
-		return
-	end
-
-	local min = 1
-	for slot,id in pairs(SLOTIDS) do
-		local v1, v2 = GetInventoryItemDurability(id)
-
-		if v1 and v2 and v2 ~= 0 then
-			min = math.min(v1/v2, min)
-			local str = fontstrings[slot]
-			str:SetTextColor(RYGColorGradient(v1/v2))
-			str:SetText(string.format("%d%%", v1/v2*100))
-		else
-			local str = rawget(fontstrings, slot)
-			if str then str:SetText(nil) end
+local function InitializeSlots()
+	for _, slotName in ipairs(SLOT_NAMES) do
+		local slotID = GetInventorySlotInfo(slotName .. "Slot")
+		local slotFrame = _G["Character" .. slotName .. "Slot"]
+		if slotID and slotFrame and not labels[slotName] then
+			local label = slotFrame:CreateFontString(nil, "OVERLAY")
+			if NumberFontNormal then
+				label:SetFontObject(NumberFontNormal)
+			elseif GameFontNormalSmall then
+				label:SetFontObject(GameFontNormalSmall)
+			end
+			label:SetTextHeight(FONT_SIZE)
+			label:SetPoint("CENTER", slotFrame, "BOTTOM", 0, 8)
+			slotIDs[slotName] = slotID
+			labels[slotName] = label
 		end
 	end
-
-	local r,g,b = RYGColorGradient(min)
 end
 
-frame:SetScript("OnEvent", frame.OnEvent)
+local function UpdateDurability()
+	if not GetInventoryItemDurability then return end
+	InitializeSlots()
+
+	for _, slotName in ipairs(SLOT_NAMES) do
+		local label = labels[slotName]
+		local slotID = slotIDs[slotName]
+		if label and slotID then
+			local current, maximum = GetInventoryItemDurability(slotID)
+			if current and maximum and maximum > 0 then
+				local percent = current / maximum
+				label:SetTextColor(RYGColorGradient(percent))
+				label:SetText(string.format("%d%%", percent * 100))
+			else
+				label:SetText(nil)
+			end
+		end
+	end
+end
+
+frame:SetScript("OnEvent", function(_, event, addonName)
+	if event == "ADDON_LOADED" and addonName ~= "Blizzard_UIPanels_Game" then return end
+	UpdateDurability()
+end)
 frame:RegisterEvent("ADDON_LOADED")
+frame:RegisterEvent("PLAYER_ENTERING_WORLD")
 frame:RegisterEvent("UPDATE_INVENTORY_DURABILITY")
+UpdateDurability()
