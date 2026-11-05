@@ -21,4 +21,12 @@ function Core:MINIMAP_PING(event, unit)
 	end
 end
 
-Core:RegisterEvent("MINIMAP_PING")
+local event = "MINIMAP_PING"
+if C_EventUtils and C_EventUtils.IsEventValid then
+	local ok, valid = pcall(C_EventUtils.IsEventValid, event)
+	if ok and not valid then return end
+end
+
+-- Some client flavors removed minimap pings. Keep the rest of kToolkit loaded
+-- when this optional notification event is unavailable.
+pcall(Core.RegisterEvent, Core, event)
