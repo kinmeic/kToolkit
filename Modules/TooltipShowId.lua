@@ -191,16 +191,11 @@ end
 -- Use the client's cursor anchor instead of moving GameTooltip manually.
 -- Native anchoring keeps the tooltip's content-based size and screen-edge
 -- handling intact.
-safeHook(GameTooltip, "SetOwner", function(tooltip, owner, anchor)
-	if Core.db.profile.TooltipMouse == 1 and anchor ~= "ANCHOR_CURSOR" then
-		tooltip:SetOwner(owner, "ANCHOR_CURSOR")
-	end
-end)
-
--- The default-anchor function sets another point after calling SetOwner, so
--- apply the cursor anchor again after its positioning has finished.
+-- Don't hook SetOwner itself: GameTooltip_SetDefaultAnchor calls it before
+-- adding a UIParent point, and changing it there creates an anchor-family error.
+-- Apply cursor anchoring only after the default function has finished.
 safeHookGlobal("GameTooltip_SetDefaultAnchor", function(tooltip, owner)
 	if Core.db.profile.TooltipMouse == 1 and tooltip == GameTooltip then
-		tooltip:SetOwner(owner, "ANCHOR_CURSOR")
+		pcall(tooltip.SetOwner, tooltip, owner, "ANCHOR_CURSOR")
 	end
 end)
