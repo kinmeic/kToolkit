@@ -16,6 +16,12 @@ local kinds = {
 	ability = "AbilityID",
 }
 
+local function applyMouseAnchor(tooltip)
+	if Core.db.profile.TooltipMouse ~= 1 or tooltip ~= GameTooltip then return end
+	if type(tooltip.SetAnchorType) ~= "function" then return end
+	pcall(tooltip.SetAnchorType, tooltip, "ANCHOR_CURSOR_RIGHT", 0, 50)
+end
+
 local function addLine(tooltip, id, label)
 	if Core.db.profile.TooltipShowID ~= 1 or not tooltip then return end
 	if issecretvalue and issecretvalue(id) then return end
@@ -62,12 +68,14 @@ end
 local function onSetHyperlink(tooltip, link)
 	local kind, id = getLinkKind(link)
 	addLineByKind(tooltip, id, kind)
+	applyMouseAnchor(tooltip)
 end
 
 local function onSetAction(tooltip, slot)
 	if not GetActionInfo then return end
 	local kind, id = GetActionInfo(slot)
 	addLineByKind(tooltip, id, kind)
+	applyMouseAnchor(tooltip)
 end
 
 local function onSetItem(tooltip)
@@ -97,12 +105,14 @@ local function onSetUnit(tooltip)
 		if ok then
 			addLine(tooltip, getNPCIDFromGUID(guid) or getNPCID(unit), kinds.unit)
 		end
+		applyMouseAnchor(tooltip)
 		return
 	end
 	if not tooltip.GetUnit then return end
 	local ok, _, unit = pcall(tooltip.GetUnit, tooltip)
 	if not ok then return end
 	addLine(tooltip, getNPCID(unit), kinds.unit)
+	applyMouseAnchor(tooltip)
 end
 
 local function safeHook(target, method, callback)
@@ -140,6 +150,7 @@ local function hookTooltip(tooltip)
 	safeHook(tooltip, "SetAction", onSetAction)
 	safeHook(tooltip, "SetSpellByID", function(self, id)
 		addLineByKind(self, id, "spell")
+		applyMouseAnchor(self)
 	end)
 end
 
@@ -183,6 +194,7 @@ if hasModernTooltipData then
 				elseif data then
 					addLineByKind(tooltip, data.id, dataKind)
 				end
+				applyMouseAnchor(tooltip)
 			end)
 		end
 	end
@@ -195,7 +207,5 @@ end
 -- adding a UIParent point, and changing it there creates an anchor-family error.
 -- Apply cursor anchoring only after the default function has finished.
 safeHookGlobal("GameTooltip_SetDefaultAnchor", function(tooltip, owner)
-	if Core.db.profile.TooltipMouse == 1 and tooltip == GameTooltip then
-		pcall(tooltip.SetOwner, tooltip, owner, "ANCHOR_CURSOR")
-	end
+	applyMouseAnchor(tooltip)
 end)
