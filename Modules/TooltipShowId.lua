@@ -188,36 +188,19 @@ if hasModernTooltipData then
 	end
 end
 
-local mouseAnchor = CreateFrame("Frame", nil, UIParent)
-mouseAnchor:SetSize(1, 1)
-local wasFollowingMouse
-mouseAnchor:SetScript("OnUpdate", function()
-	if Core.db.profile.TooltipMouse ~= 1 or not GameTooltip:IsShown() then
-		wasFollowingMouse = nil
-		return
+-- Use the client's cursor anchor instead of moving GameTooltip manually.
+-- Native anchoring keeps the tooltip's content-based size and screen-edge
+-- handling intact.
+safeHook(GameTooltip, "SetOwner", function(tooltip, owner, anchor)
+	if Core.db.profile.TooltipMouse == 1 and anchor ~= "ANCHOR_CURSOR" then
+		tooltip:SetOwner(owner, "ANCHOR_CURSOR")
 	end
-	local x, y = GetCursorPosition()
-	local scale = UIParent:GetEffectiveScale()
-	if not scale or scale <= 0 then return end
-	local cursorX, cursorY = x / scale, y / scale
-	local screenWidth, screenHeight = UIParent:GetWidth(), UIParent:GetHeight()
-	local tooltipWidth, tooltipHeight = GameTooltip:GetWidth(), GameTooltip:GetHeight()
-	-- Keep the content-driven size; writing GetWidth() back can freeze a
-	-- temporary full-screen width imposed by the tooltip's previous anchors.
-	local left, bottom = cursorX + 24, cursorY + 24
+end)
 
-	if left + tooltipWidth > screenWidth then left = cursorX - tooltipWidth - 24 end
-	if bottom + tooltipHeight > screenHeight then bottom = cursorY - tooltipHeight - 24 end
-	left = math.floor(math.max(0, math.min(left, screenWidth - tooltipWidth)) + 0.5)
-	bottom = math.floor(math.max(0, math.min(bottom, screenHeight - tooltipHeight)) + 0.5)
-
-	mouseAnchor:ClearAllPoints()
-	mouseAnchor:SetPoint("BOTTOMLEFT", UIParent, "BOTTOMLEFT", left, bottom)
-
-	local _, relativeTo = GameTooltip:GetPoint(1)
-	if relativeTo ~= mouseAnchor or not wasFollowingMouse then
-		GameTooltip:ClearAllPoints()
-		GameTooltip:SetPoint("BOTTOMLEFT", mouseAnchor, "BOTTOMLEFT")
+-- The default-anchor function sets another point after calling SetOwner, so
+-- apply the cursor anchor again after its positioning has finished.
+safeHookGlobal("GameTooltip_SetDefaultAnchor", function(tooltip, owner)
+	if Core.db.profile.TooltipMouse == 1 and tooltip == GameTooltip then
+		tooltip:SetOwner(owner, "ANCHOR_CURSOR")
 	end
-	wasFollowingMouse = true
 end)
