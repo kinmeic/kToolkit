@@ -190,11 +190,10 @@ end
 
 local mouseAnchor = CreateFrame("Frame", nil, UIParent)
 mouseAnchor:SetSize(1, 1)
-local lastLeft, lastBottom, lastWidth, lastHeight
-local lastNaturalWidth
+local wasFollowingMouse
 mouseAnchor:SetScript("OnUpdate", function()
 	if Core.db.profile.TooltipMouse ~= 1 or not GameTooltip:IsShown() then
-		lastLeft, lastBottom, lastWidth, lastHeight = nil, nil, nil, nil
+		wasFollowingMouse = nil
 		return
 	end
 	local x, y = GetCursorPosition()
@@ -203,15 +202,8 @@ mouseAnchor:SetScript("OnUpdate", function()
 	local cursorX, cursorY = x / scale, y / scale
 	local screenWidth, screenHeight = UIParent:GetWidth(), UIParent:GetHeight()
 	local tooltipWidth, tooltipHeight = GameTooltip:GetWidth(), GameTooltip:GetHeight()
-	local oversized = screenWidth > 0 and tooltipWidth >= screenWidth * 0.8
-	if oversized then
-		-- Clearing Blizzard's owner anchors can leave GameTooltip stretched to
-		-- UIParent. Restore its last content-sized width before positioning it.
-		tooltipWidth = lastNaturalWidth or math.min(400, screenWidth * 0.45)
-		GameTooltip:SetWidth(tooltipWidth)
-	elseif tooltipWidth > 0 then
-		lastNaturalWidth = tooltipWidth
-	end
+	-- Keep the content-driven size; writing GetWidth() back can freeze a
+	-- temporary full-screen width imposed by the tooltip's previous anchors.
 	local left, bottom = cursorX + 24, cursorY + 24
 
 	if left + tooltipWidth > screenWidth then left = cursorX - tooltipWidth - 24 end
@@ -219,17 +211,13 @@ mouseAnchor:SetScript("OnUpdate", function()
 	left = math.floor(math.max(0, math.min(left, screenWidth - tooltipWidth)) + 0.5)
 	bottom = math.floor(math.max(0, math.min(bottom, screenHeight - tooltipHeight)) + 0.5)
 
-	if left ~= lastLeft or bottom ~= lastBottom or tooltipWidth ~= lastWidth or tooltipHeight ~= lastHeight then
-		mouseAnchor:ClearAllPoints()
-		mouseAnchor:SetPoint("BOTTOMLEFT", UIParent, "BOTTOMLEFT", left, bottom)
-		lastLeft, lastBottom = left, bottom
-		lastWidth, lastHeight = tooltipWidth, tooltipHeight
-	end
+	mouseAnchor:ClearAllPoints()
+	mouseAnchor:SetPoint("BOTTOMLEFT", UIParent, "BOTTOMLEFT", left, bottom)
 
 	local _, relativeTo = GameTooltip:GetPoint(1)
-	if relativeTo ~= mouseAnchor or oversized then
+	if relativeTo ~= mouseAnchor or not wasFollowingMouse then
 		GameTooltip:ClearAllPoints()
 		GameTooltip:SetPoint("BOTTOMLEFT", mouseAnchor, "BOTTOMLEFT")
-		GameTooltip:SetWidth(tooltipWidth)
 	end
+	wasFollowingMouse = true
 end)
